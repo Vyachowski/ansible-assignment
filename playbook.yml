@@ -1,0 +1,26 @@
+---
+- name: Create Nginx server
+  hosts: web
+  become: true
+  tasks:
+    - name: Create ansible-worker user
+      user:
+        name: ansible-worker
+        state: present
+
+    - name: Install Git
+      apt:
+        name: git
+        state: present
+
+    - name: Copy SSH keys
+      copy:
+        src: ssh_keys/
+        dest: ~/.ssh/
+        mode: 0600
+
+    - name: Clone repository
+      git:
+        repo: "https://github.com/iphilka/stud-template.git"
+        dest: /home/ansible-worker/www/
+      become_user: ansible-worker
