@@ -1,1 +1,7 @@
 ansible-playbook playbook.yml
+
+OR
+
+ansible-playbook playbook.yml -k
+
+(If you need to enter the password)
