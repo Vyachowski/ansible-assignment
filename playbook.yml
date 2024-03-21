@@ -6,7 +6,6 @@
     nginx_config: ansible.iphilka.ru.conf
     nginx_available: /etc/nginx/sites-available
     nginx_enabled: /etc/nginx/sites-enabled
-  become: true
   tasks:
     - name: Create ansible-worker user
       user:
@@ -35,28 +34,35 @@
       copy:
         src: index.html
         dest: "{{ worker_root }}"
+        owner: ansible-worker
+        group: ansible-worker
 
-    - name: Remove nginx
-      apt:
-        name: nginx
-        state: absent 
+    - name: Set permissions for the user folder
+      file:
+        path: /home/ansible-worker
+        state: directory
+        recurse: yes
+        owner: ansible-worker
+        group: ansible-worker
+        mode: 0755
 
     - name: Install nginx
+      become: yes
       apt:
         name: nginx
         state: present 
 
     - name: Add nginx configuration
+      become: true
       copy:
         dest: "{{ nginx_available }}"
         src: "{{ nginx_config }}"
         owner: root
         group: root
         mode: 0755
-      notify: Reload nginx
 
     - name: Enable site
-      become: yes
+      become: true
       file:
         src: "{{ nginx_available }}/{{ nginx_config }}"
         dest: "{{ nginx_enabled }}/{{ nginx_config  }}"
@@ -64,10 +70,11 @@
         force: yes
 
     - name: Remove default config
-      become: yes
+      become: true
       file:
         path: "{{ nginx_enabled }}/default"
         state: absent
+      notify: Reload nginx
 
   handlers:
     - name: Reload nginx
