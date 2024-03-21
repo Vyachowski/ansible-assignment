@@ -24,10 +24,25 @@
     - name: Clone repository
       git:
         repo: "https://github.com/iphilka/stud-template.git"
-        dest: {{ worker_root }}
+        dest: "{{ worker_root }}"
       become_user: ansible-worker
 
     - name: Rewrite index.html
       copy:
         src: index.html
-        dest: {{ worker_root }}
+        dest: "{{ worker_root }}"
+
+    - name: Add Nginx configuration
+      copy:
+        dest: "/etc/nginx/sites-available/ansible.iphilka.ru.conf"
+        src: ansible.iphilka.ru.conf
+      notify: Reload nginx
+
+  handlers:
+    - name: Reload nginx
+      service:
+        name: nginx
+        state: reloaded
+
+
+
