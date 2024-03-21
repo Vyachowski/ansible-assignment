@@ -1,6 +1,8 @@
 ---
 - name: Create Nginx server
   hosts: web
+  vars:
+    worker_root: /home/ansible-worker/www/stud-template
   become: true
   tasks:
     - name: Create ansible-worker user
@@ -22,5 +24,10 @@
     - name: Clone repository
       git:
         repo: "https://github.com/iphilka/stud-template.git"
-        dest: /home/ansible-worker/www/
+        dest: {{ worker_root }}
       become_user: ansible-worker
+
+    - name: Rewrite index.html
+      copy:
+        src: index.html
+        dest: {{ worker_root }}
