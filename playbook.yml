@@ -3,6 +3,9 @@
   hosts: web
   vars:
     worker_root: /home/ansible-worker/www/stud-template
+    nginx_config: ansible.iphilka.ru.conf
+    nginx_available: /etc/nginx/sites-available
+    nginx_enabled: /etc/nginx/sites-enabled
   become: true
   tasks:
     - name: Create ansible-worker user
@@ -25,6 +28,7 @@
       git:
         repo: "https://github.com/iphilka/stud-template.git"
         dest: "{{ worker_root }}"
+        force: yes
       become_user: ansible-worker
 
     - name: Rewrite index.html
@@ -32,17 +36,41 @@
         src: index.html
         dest: "{{ worker_root }}"
 
-    - name: Add Nginx configuration
+    - name: Remove nginx
+      apt:
+        name: nginx
+        state: absent 
+
+    - name: Install nginx
+      apt:
+        name: nginx
+        state: present 
+
+    - name: Add nginx configuration
       copy:
-        dest: "/etc/nginx/sites-available/ansible.iphilka.ru.conf"
-        src: ansible.iphilka.ru.conf
+        dest: "{{ nginx_available }}"
+        src: "{{ nginx_config }}"
+        owner: root
+        group: root
+        mode: 0755
       notify: Reload nginx
+
+    - name: Enable site
+      become: yes
+      file:
+        src: "{{ nginx_available }}/{{ nginx_config }}"
+        dest: "{{ nginx_enabled }}/{{ nginx_config  }}"
+        state: link
+        force: yes
+
+    - name: Remove default config
+      become: yes
+      file:
+        path: "{{ nginx_enabled }}/default"
+        state: absent
 
   handlers:
     - name: Reload nginx
       service:
         name: nginx
-        state: reloaded
-
-
-
+        state: restarted
